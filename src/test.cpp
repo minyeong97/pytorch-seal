@@ -1,11 +1,9 @@
 #include <iostream>
-
-//#include <pybind11/pybind11.h>
-//#include <pybind11/stl.h>
-
 #include <iomanip>
 #include <memory>
 #include <string>
+
+#include <pybind11/pybind11.h>
 
 #include "seal/batchencoder.h"
 #include "seal/biguint.h"
@@ -29,37 +27,6 @@
 #include "seal/secretkey.h"
 #include "seal/serialization.h"
 #include "seal/valcheck.h"
-
-/*
-#include <vector>
-class Tensor_enc {
-public:
-	Tensor_enc()
-	{
-		array = ArrayXXd(1, 1);
-		array(0, 0) = ArrayXXd(3, 3);
-		array(0, 0) << 1, 2, 3, 4, 5, 6, 7, 8, 9;
-	}
-
-	Tensor_enc(Eigen::ArrayXXd& arr)
-	{	
-		array = Array<ArrayXXd, 1, 1>(arr)}
-	Tensor_enc(Eigen::ArrayXXd arr) : array(arr) { }
-	Tensor_enc dot(const Tensor_enc& opp) {
-		return Tensor_enc(this->array * opp.array);
-	}
-	Eigen::ArrayXXd& getArray() { return array; }
-	friend std::ostream& operator<<(std::ostream& os, Tensor_enc& tenc);
-private:
-	Array<ArrayXXd, Dynamic, Dynamic> array;
-};
-
-
-int test(void) {
-	return 17;
-}
-
-*/
 
 using namespace seal;
 using namespace std;
@@ -89,52 +56,15 @@ Ciphertext operator*(const Ciphertext ct1, const Ciphertext ct2) {
 	return result;
 }
 
-Ciphertext operator/(const Ciphertext ct1, const Ciphertext ct2) {
-	return ct1;
 }
-
-}
-
 
 #include "eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "Eigen/Dense"
 #include "eigen3/Eigen/Core"
 
-class Temp {
-public:
-	Temp() : temp(0) {}
-	int temp;
-};
-
-Temp operator*(const Temp t1, const Temp t2) {
-	return Temp();
-}
-
-Temp operator+(const Temp t1, const Temp t2) {
-	return Temp();
-}
-
 using namespace Eigen;
 
 namespace Eigen {
-	
-template<>
-struct NumTraits<Temp>
-{
-    typedef Ciphertext Real;
-    typedef Ciphertext NonInteger;
-    typedef Ciphertext Nested;
-  enum {
-    IsComplex = 0,
-    IsInteger = 0,
-    IsSigned = 1,
-    RequireInitialization = 1,
-    ReadCost = 1,
-    AddCost = 3,
-    MulCost = 3
-  };
-};
-
 template<>
 struct NumTraits<Ciphertext>
 {
@@ -144,57 +74,15 @@ struct NumTraits<Ciphertext>
   enum {
     IsComplex = 0,
     IsInteger = 0,
-    IsSigned = 1,
+    IsSigned = 0,
     RequireInitialization = 1,
     ReadCost = 1,
     AddCost = 3,
     MulCost = 3
   };
 };
-
 }
 
-Tensor<Ciphertext, 2> genTen() {
-	Plaintext pt;
-	Ciphertext ct;
-	Tensor<Ciphertext, 2> m(2, 2);
-
-	auto& d = m.dimensions();
-
-	for(int i = 0; i < d[0]; i++) { 
-		for(int j = 0; j < d[1]; j++) {
-			encoder->encode(vector<uint64_t>(8192, (i+1)*(j+1)), pt);	
-			encryptor->encrypt(pt, ct);
-			m(i, j) = ct;
-		}
-	}
-	return m;
-}
-
-void dec(Tensor<Ciphertext, 2> t) {
-	Tensor<uint64_t, 2> m(2, 2);
-	Plaintext pt;
-	vector<uint64_t> v;
-	auto d = m.dimensions();
-
-	for(int i = 0; i < d[0]; i++) { 
-		for(int j = 0; j < d[1]; j++) {
-			decryptor->decrypt(t(i, j), pt);
-			encoder->decode(pt, v);
-			m(i, j) = v[0];
-		}
-	}
-
-	std::cout << m;
-
-	return;
-}
-
-
-ostream& operator<<(ostream& os, Tensor<Ciphertext, 2> t) {
-	std::cout << "__enc__";
-	return os;
-}
 
 void init() {
     EncryptionParameters parms(scheme_type::BFV);
@@ -219,6 +107,10 @@ void init() {
 
 Tensor<Ciphertext, 3> conv(Tensor<Ciphertext, 3> act, Tensor<Ciphertext, 4> weight, int stride);
 Tensor<Ciphertext, 1> fc(Tensor<Ciphertext, 1> act, Tensor<Ciphertext, 2> weight);
+void fill1(Tensor<Ciphertext, 1>& t);
+void fill2(Tensor<Ciphertext, 2>& t);
+void fill3(Tensor<Ciphertext, 3>& t);
+void fill4(Tensor<Ciphertext, 4>& t);
 
 Tensor<Ciphertext, 1> flatten(Tensor<Ciphertext, 3> t) {
 	auto d = t.dimensions();
@@ -227,76 +119,6 @@ Tensor<Ciphertext, 1> flatten(Tensor<Ciphertext, 3> t) {
 	Tensor<Ciphertext, 1> result = t.reshape(new_dim);
 
 	return result;
-}
-
-int main(void) {
-	init();
-
-	Plaintext pt;
-	Ciphertext ct;
-
-	encoder->encode(vector<uint64_t>(8192, 0ULL), pt);	
-	encryptor->encrypt(pt, ct);
-
-	Tensor<Ciphertext, 3> act(3, 5, 5);
-	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 5; k++)
-				act(i, j, k) = ct;
-
-	Tensor<Ciphertext, 4> weight(6, 3, 3, 3);
-	for(int i = 0; i < 6; i++)
-		for(int j = 0; j < 3; j++)
-			for(int k = 0; k < 3; k++)
-				for(int g = 0; g < 3; g++)
-					weight(i, j, k, g) = ct;
-
-	Tensor<Ciphertext, 2> weight_fc(24, 3);
-	for(int i = 0; i < 24; i++)
-		for(int j = 0; j < 3; j++)
-			weight_fc(i, j) = ct;
-
-	Tensor<Ciphertext, 1> res = fc(flatten(conv(act, weight, 2)), weight_fc);
-	auto d = res.dimensions();
-	std::cout << d[0];
-	/*
-	Plaintext pt;
-	Ciphertext ct;
-
-	encoder->encode(vector<uint64_t>(8192, 14ULL), pt);	
-	encryptor->encrypt(pt, ct);
-
-	Plaintext pt1;
-	Ciphertext ct1;
-
-	encoder->encode(vector<uint64_t>(8192, 12), pt1);	
-	encryptor->encrypt(pt1, ct1);
-
-	Tensor<Ciphertext, 1> m(2);
-	m(0) = ct;
-	m(1) = ct1;
-	Ciphertext ctt = m(0);
-	Ciphertext ctt1 = m(1);
-
-	Plaintext pt2;
-	vector<uint64_t> v;
-	decryptor->decrypt(ctt+ctt1, pt2);
-	encoder->decode(pt2, v);
-	std::cout << v[0];
-	Tensor<int, 3> m(1, 2, 3);
-	m.setValues({{{1, 2, 3,},
-				  {5, 6, 7}}});
-
-	auto d = m.dimensions();
-	std::cout << d.size() << " " << d[0] << " " << d[1] << " " << d[2];
-	std::cout << std::endl;
-
-	Eigen::array<int, 2> new_dim{{2, 3}};
-	auto res = m.reshape(new_dim);
-	auto p = res.dimensions();
-	std::cout << p.size() << " " << p[0] << " " << p[1] << " " << p[2];
-	*/
-	return 0;
 }
 
 Ciphertext sum3d(Tensor<Ciphertext, 3> t) {
@@ -390,11 +212,90 @@ Tensor<Ciphertext, 1> fc(Tensor<Ciphertext, 1> act, Tensor<Ciphertext, 2> weight
 	}
 	return result;
 }
-/*
-PYBIND11_MODULE(testOctEight, m) {
-	pybind11::class_<Tensor_enc>(m, "Tensor_enc")
-		.def(pybind11::init<>())
-		.def(pybind11::init<Eigen::ArrayXXd>())
-		.def("dot", &Tensor_enc::dot);
+
+Tensor<Ciphertext, 3> square3(Tensor<Ciphertext, 3> t) {
+	return t*t;
 }
-*/
+
+Tensor<Ciphertext, 1> square1(Tensor<Ciphertext, 1> t) {
+	return t*t;
+}
+
+void fill4(Tensor<Ciphertext, 4>& t) {
+	Plaintext pt;
+	Ciphertext ct;
+
+	encoder->encode(vector<uint64_t>(8192, 0ULL), pt);	
+	encryptor->encrypt(pt, ct);
+
+	auto d = t.dimensions();
+	for(int i = 0; i < d[0]; i++)
+		for(int j = 0; j < d[1]; j++)
+			for(int k = 0; k < d[2]; k++)
+				for(int l = 0; l < d[3]; l++)
+					t(i, j, k, l) = ct;
+}
+
+void fill3(Tensor<Ciphertext, 3>& t) {
+	Plaintext pt;
+	Ciphertext ct;
+
+	encoder->encode(vector<uint64_t>(8192, 0ULL), pt);	
+	encryptor->encrypt(pt, ct);
+
+	auto d = t.dimensions();
+	for(int i = 0; i < d[0]; i++)
+		for(int j = 0; j < d[1]; j++)
+			for(int k = 0; k < d[2]; k++)
+				t(i, j, k) = ct;
+}
+
+void fill2(Tensor<Ciphertext, 2>& t) {
+	Plaintext pt;
+	Ciphertext ct;
+
+	encoder->encode(vector<uint64_t>(8192, 0ULL), pt);	
+	encryptor->encrypt(pt, ct);
+
+	auto d = t.dimensions();
+	for(int i = 0; i < d[0]; i++)
+		for(int j = 0; j < d[1]; j++)
+			t(i, j) = ct;
+}
+
+void fill1(Tensor<Ciphertext, 1>& t) {
+	Plaintext pt;
+	Ciphertext ct;
+
+	encoder->encode(vector<uint64_t>(8192, 0ULL), pt);	
+	encryptor->encrypt(pt, ct);
+
+	auto d = t.dimensions();
+	for(int i = 0; i < d[0]; i++)
+		t(i) = ct;
+}
+
+PYBIND11_MODULE(testOctNine, m) {
+	pybind11::class_<Tensor<Ciphertext, 1>>(m, "Tensor1")
+		.def(pybind11::init<>())
+		.def(pybind11::init<int>());
+	pybind11::class_<Tensor<Ciphertext, 2>>(m, "Tensor2")
+		.def(pybind11::init<>())
+		.def(pybind11::init<int, int>());
+	pybind11::class_<Tensor<Ciphertext, 3>>(m, "Tensor3")
+		.def(pybind11::init<>())
+		.def(pybind11::init<int, int, int>());
+	pybind11::class_<Tensor<Ciphertext, 4>>(m, "Tensor4")
+		.def(pybind11::init<>())
+		.def(pybind11::init<int, int, int, int>());
+	m.def("init", &init);
+	m.def("conv", &conv);
+	m.def("flatten", &flatten);
+	m.def("fc", &fc);
+	m.def("fill1", &fill1);
+	m.def("fill2", &fill2);
+	m.def("fill3", &fill3);
+	m.def("fill4", &fill4);
+	m.def("square1", &square1);
+	m.def("square3", &square3);
+}

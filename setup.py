@@ -20,10 +20,10 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'testOctEight',
+        'torchsealcpp',
         # Sort input source files to ensure bit-for-bit reproducible builds
         # (https://github.com/pybind/python_example/pull/53)
-        sorted(['src/test.cpp']),
+        sorted(['src/torchseal.cpp']),
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
@@ -106,7 +106,7 @@ class BuildExt(build_ext):
 
 
 setup(
-    name='testOctEight',
+    name='torchsealcpp',
     version=__version__,
     author='Sylvain Corlay',
     author_email='sylvain.corlay@gmail.com',
