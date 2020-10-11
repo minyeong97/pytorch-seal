@@ -4,7 +4,7 @@
 ## How use pytorch-seal
 
 1. You need Microsoft SEAL[!github.com/microsoft/seal.git] library installed
-2. GCC > 6.0 required
+2. GCC >= 6.0 required
 
 clone the project
 ```
@@ -39,7 +39,7 @@ install the module by
 ```
 pip install .
 ```
-then run the test by
+then run the test by(the linker has to know the path to SEAL library at this point)
 ```
 python test.py
 ```
