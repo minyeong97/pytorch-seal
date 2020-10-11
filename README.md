@@ -3,7 +3,8 @@
 
 ## How use pytorch-seal
 
-You need Microsoft SEAL[!github.com/microsoft/seal.git] library installed
+1. You need Microsoft SEAL[!github.com/microsoft/seal.git] library installed
+2. GCC > 6.0 required
 
 clone the project
 ```
