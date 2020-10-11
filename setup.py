@@ -30,7 +30,7 @@ ext_modules = [
             'include',
         ],
         language='c++',
-        library_dirs=['/path/to/seal/library'],
+        library_dirs=['/home/minyeong/apps/lib64'],
         libraries=['seal']
     ),
 ]

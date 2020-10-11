@@ -57,9 +57,9 @@ Ciphertext operator*(const Ciphertext ct1, const Ciphertext ct2) {
 }
 
 }
-#include "eigen/unsupported/Eigen/CXX11/Tensor"
-#include "eigen/Eigen/Dense"
-#include "eigen/Eigen/Core"
+#include "unsupported/Eigen/CXX11/Tensor"
+#include "Eigen/Dense"
+#include "Eigen/Core"
 
 using namespace Eigen;
 
