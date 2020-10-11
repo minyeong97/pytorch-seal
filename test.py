@@ -1,5 +1,5 @@
 import torchseal as ts
-import testOctNine as t
+import torchsealcpp as t
 
 class CNN(ts.Module):
     def __init__(self):

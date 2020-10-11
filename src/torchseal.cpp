@@ -57,10 +57,9 @@ Ciphertext operator*(const Ciphertext ct1, const Ciphertext ct2) {
 }
 
 }
-
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
-#include "Eigen/Dense"
-#include "eigen3/Eigen/Core"
+#include "eigen/unsupported/Eigen/CXX11/Tensor"
+#include "eigen/Eigen/Dense"
+#include "eigen/Eigen/Core"
 
 using namespace Eigen;
 
@@ -275,7 +274,7 @@ void fill1(Tensor<Ciphertext, 1>& t) {
 		t(i) = ct;
 }
 
-PYBIND11_MODULE(testOctNine, m) {
+PYBIND11_MODULE(torchsealcpp, m) {
 	pybind11::class_<Tensor<Ciphertext, 1>>(m, "Tensor1")
 		.def(pybind11::init<>())
 		.def(pybind11::init<int>());

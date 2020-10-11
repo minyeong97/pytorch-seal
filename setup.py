@@ -30,8 +30,8 @@ ext_modules = [
             'include',
         ],
         language='c++',
-        # library_dirs=['/home/vimsiin/Desktop/pytorch-seal/lib/'],
-        libraries=['seal-3.5']
+        library_dirs=['/path/to/seal/library'],
+        libraries=['seal']
     ),
 ]
 
