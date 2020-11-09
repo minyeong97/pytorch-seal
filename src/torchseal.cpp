@@ -104,6 +104,8 @@ void init() {
     decryptor = unique_ptr<Decryptor>(new Decryptor(context, secret_key));
 
     encoder = unique_ptr<BatchEncoder>(new BatchEncoder(context));
+
+    //Eigen::setNbThreads(8);
 }
 
 Tensor<Ciphertext, 3> conv(Tensor<Ciphertext, 3> act, Tensor<Ciphertext, 4> weight, int stride);
@@ -174,6 +176,7 @@ Tensor<Ciphertext, 3> conv(Tensor<Ciphertext, 3> act, Tensor<Ciphertext, 4> weig
   
   Tensor<Ciphertext, 3> result(weight_output_channel_num, result_height, result_width);
 
+  #pragma omp parallel for collapse(3)
   for(size_t i = 0; i < weight_output_channel_num; i++) {
     for(size_t j = 0; j < result_height; j++) {
       for(size_t k = 0; k < result_width; k++) {
@@ -206,6 +209,7 @@ Tensor<Ciphertext, 1> fc(Tensor<Ciphertext, 1> act, Tensor<Ciphertext, 2> weight
 
   Tensor<Ciphertext, 1> result(output_channel);
 
+  #pragma omp parallel for
   for(int i = 0; i < output_channel; i++) {
     Eigen::array<int, 2> weight_start = {0, i};
     Eigen::array<int, 2> weight_size = {act_len, 1};
@@ -223,6 +227,7 @@ Tensor<Ciphertext, 1> fc(Tensor<Ciphertext, 1> act, Tensor<Ciphertext, 2> weight
 
 Tensor<Ciphertext, 3> square3(Tensor<Ciphertext, 3> t) {
   std::chrono::steady_clock::time_point ss = std::chrono::steady_clock::now();
+  // is this going to be vectorized?
   Tensor<Ciphertext, 3> result(t*t);
   std::chrono::steady_clock::time_point ee = std::chrono::steady_clock::now();
   std::cout << __func__ << " Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(ee-ss).count() << " ms\n";
@@ -232,6 +237,7 @@ Tensor<Ciphertext, 3> square3(Tensor<Ciphertext, 3> t) {
 
 Tensor<Ciphertext, 1> square1(Tensor<Ciphertext, 1> t) {
   std::chrono::steady_clock::time_point ss = std::chrono::steady_clock::now();
+  // is this going to be vectorized?
   Tensor<Ciphertext, 1> result(t*t);
   std::chrono::steady_clock::time_point ee = std::chrono::steady_clock::now();
   std::cout << __func__ << " Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(ee-ss).count() << " ms\n";
@@ -247,6 +253,7 @@ void fill4(Tensor<Ciphertext, 4>& t) {
   encryptor->encrypt(pt, ct);
 
   auto d = t.dimensions();
+  #pragma omp parallel for collapse(4)
   for(int i = 0; i < d[0]; i++)
     for(int j = 0; j < d[1]; j++)
       for(int k = 0; k < d[2]; k++)
@@ -263,6 +270,7 @@ void fill3(Tensor<Ciphertext, 3>& t) {
   encryptor->encrypt(pt, ct);
 
   auto d = t.dimensions();
+  #pragma omp parallel for collapse(3)
   for(int i = 0; i < d[0]; i++)
     for(int j = 0; j < d[1]; j++)
       for(int k = 0; k < d[2]; k++)
@@ -282,6 +290,7 @@ void fill2(Tensor<Ciphertext, 2>& t) {
   encryptor->encrypt(pt, ct);
 
   auto d = t.dimensions();
+  #pragma omp parallel for collapse(2)
   for(int i = 0; i < d[0]; i++)
     for(int j = 0; j < d[1]; j++)
       t(i, j) = ct;
@@ -299,6 +308,7 @@ void fill1(Tensor<Ciphertext, 1>& t) {
   encryptor->encrypt(pt, ct);
 
   auto d = t.dimensions();
+  #pragma omp parallel for
   for(int i = 0; i < d[0]; i++)
     t(i) = ct;
 
@@ -320,13 +330,13 @@ PYBIND11_MODULE(torchsealcpp, m) {
     .def(pybind11::init<>())
     .def(pybind11::init<int, int, int, int>());
   m.def("init", &init);
-  m.def("conv", &conv);
-  m.def("flatten", &flatten);
-  m.def("fc", &fc);
-  m.def("fill1", &fill1);
-  m.def("fill2", &fill2);
-  m.def("fill3", &fill3);
-  m.def("fill4", &fill4);
-  m.def("square1", &square1);
-  m.def("square3", &square3);
+  m.def("conv", &conv, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("flatten", &flatten, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("fc", &fc, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("fill1", &fill1, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("fill2", &fill2, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("fill3", &fill3, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("fill4", &fill4, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("square1", &square1, pybind11::call_guard<pybind11::gil_scoped_release>());
+  m.def("square3", &square3, pybind11::call_guard<pybind11::gil_scoped_release>());
 }

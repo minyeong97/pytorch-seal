@@ -23,7 +23,7 @@ class CryptoNets(ts.Module):
   def forward(self, x):
     r = self.conv_layer(x)
     f = ts.flatten(r)
-    return sefl.fc_layer(f)
+    return self.fc_layer(f)
 
 if __name__ == '__main__':
   cnn = CryptoNets()
